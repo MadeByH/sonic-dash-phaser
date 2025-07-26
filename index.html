@@ -1,0 +1,46 @@
+// بازی سونیک داش با Phaser 3 - نسخه کامل با دشمن، سرعت، سطح و صدا const config = { type: Phaser.AUTO, width: 800, height: 400, physics: { default: 'arcade', arcade: { gravity: { y: 1000 }, debug: false } }, scene: { preload, create, update } };
+
+const game = new Phaser.Game(config);
+
+let sonic, cursors, ground, rings, enemies; let score = 0, scoreText, gameOver = false; let bgMusic;
+
+function preload() { this.load.image('bg', 'https://i.imgur.com/4xjDZP7.png'); this.load.image('ground', 'https://i.imgur.com/1cVZ4d0.png'); this.load.image('ring', 'https://i.imgur.com/UZZQVVF.png'); this.load.image('enemy', 'https://i.imgur.com/lxvNw30.png'); this.load.spritesheet('sonic', 'https://i.imgur.com/V9wH6oG.png', { frameWidth: 48, frameHeight: 48 }); this.load.audio('bgmusic', 'https://opengameart.org/sites/default/files/8-bit-loop.ogg'); }
+
+function create() { this.add.tileSprite(0, 0, 800, 400, 'bg').setOrigin(0);
+
+ground = this.physics.add.staticGroup(); ground.create(400, 390, 'ground').setScale(2).refreshBody();
+
+sonic = this.physics.add.sprite(100, 300, 'sonic'); sonic.setCollideWorldBounds(true);
+
+this.anims.create({ key: 'run', frames: this.anims.generateFrameNumbers('sonic', { start: 0, end: 5 }), frameRate: 10, repeat: -1 });
+
+rings = this.physics.add.group(); enemies = this.physics.add.group();
+
+this.time.addEvent({ delay: 1200, callback: spawnRing, callbackScope: this, loop: true }); this.time.addEvent({ delay: 3000, callback: spawnEnemy, callbackScope: this, loop: true });
+
+cursors = this.input.keyboard.createCursorKeys();
+
+this.physics.add.collider(sonic, ground); this.physics.add.overlap(sonic, rings, collectRing, null, this); this.physics.add.collider(sonic, enemies, hitEnemy, null, this);
+
+scoreText = this.add.text(16, 16, 'Rings: 0', { fontSize: '24px', fill: '#fff' });
+
+// موزیک پس‌زمینه bgMusic = this.sound.add('bgmusic', { loop: true }); bgMusic.play(); }
+
+function update() { if (gameOver) return;
+
+sonic.play('run', true);
+
+if (cursors.up.isDown && sonic.body.touching.down) { sonic.setVelocityY(-500); }
+
+rings.children.iterate(function (ring) { ring.x -= 5; if (ring.x < -50) ring.destroy(); });
+
+enemies.children.iterate(function (enemy) { enemy.x -= 6; if (enemy.x < -50) enemy.destroy(); }); }
+
+function spawnRing() { const y = Phaser.Math.Between(200, 350); const ring = rings.create(850, y, 'ring'); ring.setScale(0.5); ring.setCircle(16); }
+
+function spawnEnemy() { const enemy = enemies.create(850, 345, 'enemy'); enemy.setImmovable(true); enemy.body.setSize(40, 40); }
+
+function collectRing(player, ring) { ring.destroy(); score += 1; scoreText.setText('Rings: ' + score); }
+
+function hitEnemy(player, enemy) { this.physics.pause(); player.setTint(0xff0000); gameOver = true; bgMusic.stop(); scoreText.setText('💀 باختی! امتیاز: ' + score); }
+
