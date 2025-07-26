@@ -6,10 +6,26 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
   <style>
     body { margin: 0; background: #000; overflow: hidden; }
-    canvas { display: block; width: 100vw; height: 100vh; }
+    canvas { display: block; margin: auto; }
+    #jumpBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      background: #00c3ff;
+      color: #fff;
+      font-size: 20px;
+      border-radius: 50%;
+      border: none;
+      z-index: 999;
+      box-shadow: 0 0 15px #00c3ff;
+    }
   </style>
 </head>
 <body>
+
+<button id="jumpBtn">🕹️</button>
 
 <script>
   const config = {
@@ -31,13 +47,14 @@
   let sonic, cursors, ground, rings, enemies;
   let score = 0, scoreText, gameOver = false;
   let bgMusic;
+  let jumpRequested = false;
 
   function preload() {
     this.load.image('bg', 'https://i.imgur.com/4xjDZP7.png');
-    this.load.image('ground', 'https://i.ibb.co/8nR2dRr8/desktop-wallpaper-green-hill-zone-sonic-thr-hedghog-green-hill-zone.jpg');
-    this.load.image('ring', 'https://i.ibb.co/Qj68Gys5/image.png');
+    this.load.image('ground', 'https://i.ibb.co/8nR2dRr/desktop-wallpaper-green-hill-zone-sonic-thr-hedghog-green-hill-zone.jpg');
+    this.load.image('ring', 'https://i.ibb.co/Qj68Gys/image.png');
     this.load.image('enemy', 'https://i.imgur.com/lxvNw30.png');
-    this.load.spritesheet('sonic', 'https://i.ibb.co/xKgKQZt4/image.png', {
+    this.load.spritesheet('sonic', 'https://i.ibb.co/xKgKQZt/image.png', {
       frameWidth: 48,
       frameHeight: 48
     });
@@ -45,15 +62,15 @@
   }
 
   function create() {
-    this.bg = this.add.tileSprite(0, 0, config.width, config.height, 'bg').setOrigin(0).setScrollFactor(0);
+    this.bg = this.add.tileSprite(0, 0, config.width, config.height, 'bg').setOrigin(0);
 
     ground = this.physics.add.staticGroup();
-    ground.create(config.width / 2, config.height - 10, 'ground').setScale(4).refreshBody();
+    ground.create(config.width / 2, config.height - 20, 'ground').setScale(2).refreshBody();
 
-    sonic = this.physics.add.sprite(100, config.height - 100, 'sonic');
+    sonic = this.physics.add.sprite(100, config.height - 150, 'sonic');
     sonic.setCollideWorldBounds(true);
     sonic.setSize(30, 40);
-    sonic.setOffset(9, 5);
+    sonic.setOffset(10, 5);
 
     this.anims.create({
       key: 'run',
@@ -74,21 +91,29 @@
     this.physics.add.overlap(sonic, rings, collectRing, null, this);
     this.physics.add.collider(sonic, enemies, hitEnemy, null, this);
 
-    scoreText = this.add.text(16, 16, 'Rings: 0', { fontSize: '24px', fill: '#fff' });
+    scoreText = this.add.text(16, 16, 'Rings: 0', {
+      fontSize: '24px',
+      fill: '#fff'
+    });
 
     bgMusic = this.sound.add('bgmusic', { loop: true });
     bgMusic.play();
+
+    // کنترل موبایل
+    document.getElementById("jumpBtn").addEventListener("click", () => {
+      jumpRequested = true;
+    });
   }
 
   function update() {
     if (gameOver) return;
 
     this.bg.tilePositionX += 2;
-
     sonic.play('run', true);
 
-    if (cursors.up.isDown && sonic.body.touching.down) {
+    if ((cursors.up.isDown || jumpRequested) && sonic.body.touching.down) {
       sonic.setVelocityY(-500);
+      jumpRequested = false;
     }
 
     rings.children.iterate(ring => {
@@ -103,9 +128,9 @@
   }
 
   function spawnRing() {
-    const y = Phaser.Math.Between(config.height - 180, config.height - 100);
+    const y = Phaser.Math.Between(config.height - 250, config.height - 150);
     const ring = rings.create(config.width + 50, y, 'ring');
-    ring.setScale(0.25);
+    ring.setScale(0.2);
     ring.setCircle(16);
     ring.setGravityY(0);
     ring.setImmovable(true);
